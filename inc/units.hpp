@@ -1,79 +1,101 @@
-template<int K, int S, int M>
+template<int... Dimensions>
 struct Unit {
     double value;
 
     explicit Unit(double v) : value(v) {}
 
-    template<int K2, int S2, int M2>
-    Unit& operator+=(const Unit<K2, S2, M2>& rhs) {
-        static_assert(K==K2 && S==S2 && M==M2, "Units must match for `+=`");
-        value += rhs.value;
-        return *this;
-    }
-
-    template<int K2, int S2, int M2>
-    Unit<K2, S2, M2> operator+(const Unit<K2, S2, M2>& rhs) const {
-        static_assert(K == K2 && S == S2 && M == M2, "Units must match for `+`");
-        Unit<K,S,M> tmp{value};
-        tmp.value += rhs.value;
-        return tmp;
-    }
-
-    template<int K2, int S2, int M2>
-    Unit& operator-=(const Unit<K2, S2, M2>& rhs) {
-        static_assert(K==K2 && S==S2 && M==M2, "Units must match for `-=`");
-        value -= rhs.value;
-        return *this;
-    }
-
-    template<int K2, int S2, int M2>
-    Unit<K2, S2, M2> operator-(const Unit<K2, S2, M2>& rhs) const {
-        static_assert(K == K2 && S == S2 && M == M2, "Units must match for `-`");
-        Unit<K,S,M> tmp{value};
-        tmp.value -= rhs.value;
-        return tmp;
-    }
-
-    static void print_unit() {
-        std::cout << K << " " << S << " " << M << "\n";
+    static void print_dimensions() {
+        std::cout << "Dimensions: ";
+        ((std::cout << Dimensions << " "), ...);
+        std::cout << std::endl;
     }
 };
 
-template<int K1,int S1,int M1>
-Unit<K1,S1,M1> operator*(const Unit<K1,S1,M1>& a, const double value) {
-    return Unit<K1,S1,M1>(a.value * value);
+template<typename T, typename U>
+struct are_dimensions_compatible;
+
+template<int... D1, int... D2>
+struct are_dimensions_compatible<Unit<D1...>, Unit<D2...>> {
+    static constexpr bool value = (sizeof...(D1) == sizeof...(D2)) && 
+                                  ((D1 == D2) && ...); 
+};
+
+template<typename T, typename U>
+struct add_dimensions;
+
+template<int... D1, int... D2>
+struct add_dimensions<Unit<D1...>, Unit<D2...>> {
+     static_assert(sizeof...(D1) == sizeof...(D2), 
+                  "Units must have same number of dimensions");
+
+    using type = Unit<(D1 + D2)...>;
+};
+
+template<typename T, typename U>
+struct subtract_dimensions;
+
+template<int... D1, int... D2>
+struct subtract_dimensions<Unit<D1...>, Unit<D2...>> {
+    static_assert(sizeof...(D1) == sizeof...(D2), 
+                  "Units must have same number of dimensions");
+    
+    using type = Unit<(D1 - D2)...>; 
+};
+
+template<int... D1, int... D2>
+auto operator+(const Unit<D1...>& a, const Unit<D2...>& b) {
+    static_assert(are_dimensions_compatible<Unit<D1...>, Unit<D2...>>::value,
+                  "Units must have same dimensions for '+'");
+    return Unit<D1...>{a.value + b.value};
 }
 
-template<int K1,int S1,int M1>
-Unit<K1,S1,M1> operator/(const Unit<K1,S1,M1>& a, const double value) {
-    return Unit<K1,S1,M1>(a.value / value);
+template<int... D1, int... D2>
+auto operator-(const Unit<D1...>& a, const Unit<D2...>& b) {
+    static_assert(are_dimensions_compatible<Unit<D1...>, Unit<D2...>>::value,
+                  "Units must have same dimensions for '-'");
+    return Unit<D1...>{a.value - b.value};
 }
 
-template<int K1,int S1,int M1>
-Unit<K1,S1,M1> operator*(const double value, const Unit<K1,S1,M1>& a) {
-    return Unit<K1,S1,M1>(a.value * value);
+template<int... D1, int... D2>
+auto operator*(const Unit<D1...>& a, const Unit<D2...>& b) {
+    using result_type = typename add_dimensions<Unit<D1...>, Unit<D2...>>::type;
+    return result_type{a.value * b.value};
 }
 
-template<int K1,int S1,int M1>
-Unit<-K1,-S1,-M1> operator/(const double value, const Unit<K1,S1,M1>& a) {
-    return Unit<-K1,-S1,-M1>(a.value / value);
+template<int... D1, int... D2>
+auto operator/(const Unit<D1...>& a, const Unit<D2...>& b) {
+    using result_type = typename subtract_dimensions<Unit<D1...>, Unit<D2...>>::type;
+    return result_type{a.value / b.value};
+}
+
+// Unit op Scalar
+template<int... D>
+auto operator*(const Unit<D...>& a, const double value) {
+    return Unit<D...>{a.value * value};
+}
+
+template<int... D>
+auto operator/(const Unit<D...>& a, const double value) {
+    return Unit<D...>{a.value / value};
 }
 
 
-template<int K1,int S1,int M1,int K2,int S2,int M2>
-Unit<K1-K2, S1-S2, M1-M2> operator/(const Unit<K1,S1,M1>& a, const Unit<K2,S2,M2>& b) {
-    return Unit<K1-K2, S1-S2, M1-M2>(a.value / b.value);
+// Scalar op Unit
+template<int... D>
+auto operator*(const double value, const Unit<D...>& a) {
+    return Unit<D...>{a.value * value};
 }
 
-template<int K1,int S1,int M1,int K2,int S2,int M2>
-Unit<K1+K2, S1+S2, M1+M2> operator*(const Unit<K1,S1,M1>& a, const Unit<K2,S2,M2>& b) {
-    return Unit<K1+K2, S1+S2, M1+M2>(a.value * b.value);
+template<int... D>
+auto operator/(const double value, const Unit<D...>& a) {
+    return Unit<(-D)...>{value / a.value};
 }
 
 
-using Kilogram = Unit<1,0,0>;
-using Second   = Unit<0,1,0>;
-using Meter    = Unit<0,0,1>;
+using Kilogram = Unit<1,0,0,0>;
+using Second   = Unit<0,1,0,0>;
+using Meter    = Unit<0,0,1,0>;
+using Ampere   = Unit<0,0,0,1>;
 
 Kilogram operator"" _kg(unsigned long long x) {
     return Kilogram(x);
@@ -85,4 +107,8 @@ Second operator"" _s(unsigned long long x) {
 
 Meter operator"" _m(unsigned long long x) {
     return Meter(x);
+}
+
+Ampere operator"" _A(unsigned long long x) {
+    return Ampere(x);
 }
