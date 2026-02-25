@@ -1,8 +1,17 @@
+#include <concepts>
+#include <cmath>
+
+#include "utils.hpp"
+
+template<typename T>
+concept Arithmetic = std::is_arithmetic_v<T>;
+
 template<int... Dimensions>
 struct Unit {
     double value;
 
-    explicit Unit(double v) : value(v) {}
+    template<Arithmetic T>
+    explicit Unit(T v) : value(v) {}
 
     static void print_dimensions() {
         std::cout << "Dimensions: ";
@@ -74,6 +83,11 @@ auto operator*(const Unit<D...>& a, const double value) {
     return Unit<D...>{a.value * value};
 }
 
+template<int... D, int Value>
+auto operator^(const Unit<D...>& a, std::integral_constant<int, Value> value) {
+    return Unit<(D + value)...>{a.value};
+}
+
 template<int... D>
 auto operator/(const Unit<D...>& a, const double value) {
     return Unit<D...>{a.value / value};
@@ -96,6 +110,9 @@ using Kilogram = Unit<1,0,0,0>;
 using Second   = Unit<0,1,0,0>;
 using Meter    = Unit<0,0,1,0>;
 using Ampere   = Unit<0,0,0,1>;
+
+template<int N> 
+constexpr auto scalar = std::integral_constant<int, N>{};
 
 Kilogram operator"" _kg(unsigned long long x) {
     return Kilogram(x);

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <units.hpp>
 
+
 int main() {
     Kilogram kg = 1_kg;
     Second s = 2_s;
@@ -9,7 +10,7 @@ int main() {
     auto kg_s = kg * s;
     std::cout << "kg·s = " << kg_s.value << "\n";
 
-    auto kg_s_m = kg * s * m / 1_m * 1_A;
+    auto kg_s_m = (kg * s * m / 1_m * 1_A * 1_A) ^ scalar<3>;
     kg_s_m.print_dimensions();
 
 
