@@ -9,8 +9,11 @@ int main() {
     auto kg_s = kg * s;
     std::cout << "kg·s = " << kg_s.value << "\n";
 
-    auto kg_s_m = kg * s * m;
-    auto speed = Meter(100) / Second(20);
+    auto kg_s_m = kg * s * m / 1_m;
+    kg_s_m.print_unit();
+
+
+    auto speed = Meter(100) / Second(20) * 1.1;
 
     auto a = kg_s_m + kg_s;
     std::cout << "a = " << a.value << "\n";

@@ -1,8 +1,8 @@
 template<int K, int S, int M>
 struct Unit {
-    long long value;
+    double value;
 
-    explicit Unit(long long v) : value(v) {}
+    explicit Unit(double v) : value(v) {}
 
     template<int K2, int S2, int M2>
     Unit& operator+=(const Unit<K2, S2, M2>& rhs) {
@@ -33,18 +33,43 @@ struct Unit {
         tmp.value -= rhs.value;
         return tmp;
     }
-    
+
+    static void print_unit() {
+        std::cout << K << " " << S << " " << M << "\n";
+    }
 };
+
+template<int K1,int S1,int M1>
+Unit<K1,S1,M1> operator*(const Unit<K1,S1,M1>& a, const double value) {
+    return Unit<K1,S1,M1>(a.value * value);
+}
+
+template<int K1,int S1,int M1>
+Unit<K1,S1,M1> operator/(const Unit<K1,S1,M1>& a, const double value) {
+    return Unit<K1,S1,M1>(a.value / value);
+}
+
+template<int K1,int S1,int M1>
+Unit<K1,S1,M1> operator*(const double value, const Unit<K1,S1,M1>& a) {
+    return Unit<K1,S1,M1>(a.value * value);
+}
+
+template<int K1,int S1,int M1>
+Unit<-K1,-S1,-M1> operator/(const double value, const Unit<K1,S1,M1>& a) {
+    return Unit<-K1,-S1,-M1>(a.value / value);
+}
+
+
+template<int K1,int S1,int M1,int K2,int S2,int M2>
+Unit<K1-K2, S1-S2, M1-M2> operator/(const Unit<K1,S1,M1>& a, const Unit<K2,S2,M2>& b) {
+    return Unit<K1-K2, S1-S2, M1-M2>(a.value / b.value);
+}
 
 template<int K1,int S1,int M1,int K2,int S2,int M2>
 Unit<K1+K2, S1+S2, M1+M2> operator*(const Unit<K1,S1,M1>& a, const Unit<K2,S2,M2>& b) {
     return Unit<K1+K2, S1+S2, M1+M2>(a.value * b.value);
 }
 
-template<int K1,int S1,int M1,int K2,int S2,int M2>
-Unit<K1-K2, S1-S2, M1-M2> operator/(const Unit<K1,S1,M1>& a, const Unit<K2,S2,M2>& b) {
-    return Unit<K1-K2, S1-S2, M1-M2>(a.value / b.value);
-}
 
 using Kilogram = Unit<1,0,0>;
 using Second   = Unit<0,1,0>;
